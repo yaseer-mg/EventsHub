@@ -16,6 +16,7 @@ const settingsRoutes = require('./routes/settings');
 const billingRoutes = require('./routes/billing');
 const reportRoutes = require('./routes/reports');
 const superAdminRoutes = require('./routes/superAdmin');
+const { handleWebhook } = require('./controllers/billingController');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -46,9 +47,7 @@ const scanLimiter = rateLimit({
 app.post(
   '/api/billing/webhook',
   express.raw({ type: 'application/json' }),
-  (req, res) => {
-    res.status(200).json({ received: true });
-  }
+  handleWebhook
 );
 
 app.use(morgan('dev'));
