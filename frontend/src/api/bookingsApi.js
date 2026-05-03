@@ -8,8 +8,8 @@ export const createBooking = (data) => axiosInstance.post('/bookings', data)
 
 export const updateBooking = (id, data) => axiosInstance.put(`/bookings/${id}`, data)
 
-export const updateBookingStatus = (id, status) =>
-  axiosInstance.patch(`/bookings/${id}/status`, { status })
+export const updateBookingStatus = (id, status, data = {}) =>
+  axiosInstance.patch(`/bookings/${id}/status`, { status, ...data })
 
 export const toggleBookingActive = (id) => axiosInstance.patch(`/bookings/${id}/toggle`)
 
