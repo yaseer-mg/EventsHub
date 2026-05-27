@@ -18,15 +18,15 @@ import PageWrapper from '../../components/layout/PageWrapper'
 import LoadingSpinner from '../../components/shared/LoadingSpinner'
 
 const eventTypeOptions = [
-  'Wedding',
-  'Conference',
-  'Birthday',
-  'Concert',
-  'Seminar',
-  'Graduation',
-  'Religious',
-  'Other',
-].map((value) => ({ value, label: value }))
+  ['wedding', 'Wedding'],
+  ['conference', 'Conference'],
+  ['birthday', 'Birthday'],
+  ['concert', 'Concert'],
+  ['seminar', 'Seminar'],
+  ['graduation', 'Graduation'],
+  ['religious', 'Religious'],
+  ['other', 'Other'],
+].map(([value, label]) => ({ value, label }))
 
 const paymentStatusOptions = [
   { value: 'unpaid', label: 'Unpaid' },
@@ -48,7 +48,7 @@ const bookingSchema = z
     preferred_date: z.string().min(1, 'Preferred date is required'),
     preferred_time: z.string().min(1, 'Preferred time is required'),
     duration_hours: numberField('Duration is required').min(1).max(24),
-    expected_guests: numberField('Expected guests is required').min(1),
+    guest_count: numberField('Expected guests is required').min(1),
     hall_id: z.string().min(1, 'Hall is required'),
     notes: z.string().optional(),
     amount_due: numberField('Amount due is required').min(0),
@@ -87,11 +87,11 @@ function useDebouncedValue(value, delay = 300) {
 function mapBookingToForm(booking) {
   return {
     event_name: booking.event_name ?? '',
-    event_type: booking.event_type ?? booking.type ?? '',
+    event_type: String(booking.event_type ?? booking.type ?? '').toLowerCase(),
     preferred_date: (booking.preferred_date ?? booking.date ?? '').slice(0, 10),
     preferred_time: booking.preferred_time ?? booking.time ?? '',
     duration_hours: booking.duration_hours ?? booking.duration ?? 1,
-    expected_guests: booking.expected_guests ?? booking.guests ?? 1,
+    guest_count: booking.guest_count ?? booking.expected_guests ?? booking.guests ?? 1,
     hall_id: String(booking.hall_id ?? booking.hall?.id ?? ''),
     notes: booking.notes ?? '',
     amount_due: booking.amount_due ?? 0,
@@ -130,7 +130,7 @@ export default function BookingForm() {
       preferred_date: today,
       preferred_time: '',
       duration_hours: 1,
-      expected_guests: 1,
+      guest_count: 1,
       hall_id: '',
       notes: '',
       amount_due: 0,
@@ -202,9 +202,9 @@ export default function BookingForm() {
       const payload = {
         ...values,
         client_id: clientId,
-        hall_id: Number(values.hall_id),
+        hall_id: values.hall_id || null,
         duration_hours: Number(values.duration_hours),
-        expected_guests: Number(values.expected_guests),
+        guest_count: Number(values.guest_count),
         amount_due: Number(values.amount_due),
         amount_paid: Number(values.amount_paid || 0),
       }
@@ -243,7 +243,7 @@ export default function BookingForm() {
                   setSelectedClient(null)
                 }}
               />
-              {clientSearch.length >= 2 && !selectedClient ? (
+              {clientSearch.length >= 2 && !selectedClient && !showNewClient ? (
                 <div className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 shadow-xl">
                   {clients.map((client) => (
                     <button
@@ -412,12 +412,12 @@ export default function BookingForm() {
               />
               <Input
                 label="Expected Guests"
-                name="expected_guests"
+                name="guest_count"
                 type="number"
                 min="1"
-                error={errors.expected_guests?.message}
+                error={errors.guest_count?.message}
                 required
-                {...register('expected_guests')}
+                {...register('guest_count')}
               />
               <Select
                 label="Hall"
