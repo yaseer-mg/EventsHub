@@ -1,16 +1,30 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { CheckCircle, XCircle } from 'lucide-react'
 import { verifyEmail } from '../../api/authApi'
 import Button from '../../components/ui/Button'
 import LoadingSpinner from '../../components/shared/LoadingSpinner'
 
+const verificationRequests = new Map()
+
+function getVerificationRequest(token) {
+  if (!verificationRequests.has(token)) {
+    const request = verifyEmail(token).catch((error) => {
+      verificationRequests.delete(token)
+      throw error
+    })
+
+    verificationRequests.set(token, request)
+  }
+
+  return verificationRequests.get(token)
+}
+
 export default function VerifyEmail({ token: tokenProp }) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const token = tokenProp ?? searchParams.get('token')
   const [status, setStatus] = useState('loading')
-  const hasSubmittedVerification = useRef(false)
 
   useEffect(() => {
     let mounted = true
@@ -21,14 +35,8 @@ export default function VerifyEmail({ token: tokenProp }) {
         return
       }
 
-      if (hasSubmittedVerification.current) {
-        return
-      }
-
-      hasSubmittedVerification.current = true
-
       try {
-        await verifyEmail(token)
+        await getVerificationRequest(token)
 
         if (mounted) {
           setStatus('success')
