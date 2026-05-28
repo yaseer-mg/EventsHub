@@ -44,10 +44,23 @@ function getBookingsData(response) {
   const total = payload.total ?? payload.meta?.total ?? rows.length
   const page = payload.current_page ?? payload.meta?.current_page ?? payload.page ?? 1
   const perPage = payload.per_page ?? payload.meta?.per_page ?? payload.perPage ?? rows.length ?? 10
+  const fallbackStats = rows.reduce(
+    (acc, booking) => {
+      if (booking.status === 'pending') acc.pending += 1
+      if (booking.status === 'approved') acc.approved += 1
+      acc.revenue_collected += Number(booking.amount_paid) || 0
+      return acc
+    },
+    { pending: 0, approved: 0, revenue_collected: 0 },
+  )
 
   return {
     rows,
-    stats: payload.stats ?? {},
+    stats: {
+      total,
+      ...fallbackStats,
+      ...(payload.stats ?? {}),
+    },
     total,
     page,
     perPage,

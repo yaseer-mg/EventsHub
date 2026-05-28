@@ -22,6 +22,14 @@ const STATUS_TRANSITIONS = {
 };
 const TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
+function toNumber(value) {
+  return Number(value || 0);
+}
+
+function toInt(value) {
+  return Number.parseInt(value || 0, 10);
+}
+
 const createBookingSchema = Joi.object({
   client_id: Joi.string().uuid().required(),
   event_name: Joi.string().max(255).required(),
@@ -305,8 +313,8 @@ async function getAllBookings(req, res, next) {
   try {
     const filters = {
       status: req.query.status ? String(req.query.status).trim() : '',
-      payment_status: req.query.payment_status
-        ? String(req.query.payment_status).trim()
+      payment_status: req.query.payment_status || req.query.payment
+        ? String(req.query.payment_status ?? req.query.payment).trim()
         : '',
       event_type: req.query.event_type ? String(req.query.event_type).trim() : '',
       date_from: req.query.date_from ? String(req.query.date_from).trim() : '',
@@ -351,12 +359,31 @@ async function getAllBookings(req, res, next) {
       values
     );
 
+    const summaryResult = await query(
+      `SELECT COUNT(*)::int AS total,
+              COUNT(*) FILTER (WHERE b.status = 'pending')::int AS pending,
+              COUNT(*) FILTER (WHERE b.status = 'approved')::int AS approved,
+              COALESCE(SUM(b.amount_paid), 0)::numeric AS revenue_collected
+       FROM bookings b
+       LEFT JOIN clients c ON b.client_id = c.id
+       LEFT JOIN halls h ON b.hall_id = h.id
+       ${whereClause}`,
+      values
+    );
+
     const total = countResult.rows[0].total;
     const totalPages = Math.ceil(total / limit) || 1;
+    const summary = summaryResult.rows[0];
 
     return res.status(200).json({
       success: true,
       bookings: bookingsResult.rows,
+      stats: {
+        total: toInt(summary.total),
+        pending: toInt(summary.pending),
+        approved: toInt(summary.approved),
+        revenue_collected: toNumber(summary.revenue_collected),
+      },
       total,
       page,
       totalPages,
