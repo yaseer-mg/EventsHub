@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { Calendar, Clock, Landmark, Printer, Users } from 'lucide-react'
+import { Calendar, Clock, Download, Eye, Landmark, Printer, Users } from 'lucide-react'
 import { getEventById, updateEventStatus } from '../../api/eventsApi'
 import { deleteEventAttendees, getEventAttendees } from '../../api/attendeesApi'
 import Button from '../../components/ui/Button'
@@ -71,8 +71,9 @@ export default function EventDetail() {
 
   const event = payload(data).event ?? payload(data)
   const attendees = rows(attendeesData)
-  const checkInCount = Number(event.check_in_count ?? attendees.filter((a) => a.checked_in).length)
-  const totalAttendees = Number(event.total_attendees ?? attendees.length)
+  const attendeeStats = payload(attendeesData).stats ?? {}
+  const checkInCount = Number(attendeeStats.checked_in_count ?? event.check_in_count ?? attendees.filter((a) => a.checked_in).length)
+  const totalAttendees = Number(attendeeStats.total ?? attendees.length ?? event.total_attendees ?? 0)
   const notArrived = Math.max(0, totalAttendees - checkInCount)
   const progress = totalAttendees ? Math.round((checkInCount / totalAttendees) * 100) : 0
 
@@ -270,6 +271,29 @@ export default function EventDetail() {
                 <p className="text-sm text-slate-300">
                   {checkInCount} / {totalAttendees} checked in
                 </p>
+                <Button
+                  className="w-full"
+                  icon={<Eye className="h-4 w-4" />}
+                  onClick={() => navigate(`/events/${id}/gatepasses`)}
+                >
+                  View Gate Passes
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  icon={<Printer className="h-4 w-4" />}
+                  onClick={() => navigate(`/events/${id}/gatepasses`)}
+                >
+                  Print All
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  icon={<Download className="h-4 w-4" />}
+                  onClick={() => navigate(`/events/${id}/gatepasses`)}
+                >
+                  Download PDF
+                </Button>
                 <Button variant="danger" className="w-full" onClick={() => setConfirmClear(true)}>
                   Clear & Regenerate
                 </Button>

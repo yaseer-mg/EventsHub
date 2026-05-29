@@ -36,6 +36,7 @@ import Dashboard from './pages/dashboard/Dashboard'
 import AttendeesForm from './pages/events/AttendeesForm'
 import EventDetail from './pages/events/EventDetail'
 import UpcomingEvents from './pages/events/UpcomingEvents'
+import GatePassBatch from './pages/gatepass/GatePassBatch'
 import GatePassCard from './pages/gatepass/GatePassCard'
 import ScanConfirm from './pages/gatepass/ScanConfirm'
 import Onboarding from './pages/onboarding/Onboarding'
@@ -50,6 +51,7 @@ const routeTitles = [
   { pattern: /^\/bookings\/[^/]+$/, title: 'Booking Details' },
   { pattern: /^\/events$/, title: 'Upcoming Events' },
   { pattern: /^\/events\/[^/]+\/attendees$/, title: 'Event Attendees' },
+  { pattern: /^\/events\/[^/]+\/gatepasses$/, title: 'Gate Passes' },
   { pattern: /^\/events\/[^/]+$/, title: 'Event Details' },
   { pattern: /^\/gatepass\/[^/]+$/, title: 'Gate Pass' },
   { pattern: /^\/scan$/, title: 'QR Scanner' },
@@ -282,6 +284,7 @@ function AppRoutes() {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/events/:id/gatepasses" element={<GatePassBatch />} />
 
         <Route element={<MainLayout />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />

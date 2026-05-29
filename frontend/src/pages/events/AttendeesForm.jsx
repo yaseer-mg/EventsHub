@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { Calendar, Landmark, Loader2, Plus, Trash2 } from 'lucide-react'
 import { getEventById } from '../../api/eventsApi'
@@ -129,6 +129,7 @@ function makeAttendees(tagGroups, passTemplate, passDetails) {
 export default function AttendeesForm() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [step, setStep] = useState(1)
   const [warning, setWarning] = useState('')
   const [passTemplate, setPassTemplate] = useState(TEMPLATE_OPTIONS[0].value)
@@ -166,6 +167,8 @@ export default function AttendeesForm() {
     mutationFn: () => bulkCreateAttendees(id, attendees),
     onSuccess: () => {
       toast.success(`${attendees.length} passes generated!`)
+      queryClient.invalidateQueries({ queryKey: ['event', id] })
+      queryClient.invalidateQueries({ queryKey: ['event-attendees', id] })
       navigate(`/events/${id}`)
     },
     onError: (error) => toast.error(error?.response?.data?.message ?? error.message),

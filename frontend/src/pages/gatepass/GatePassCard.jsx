@@ -120,7 +120,7 @@ function normalizePass(pass, attendee, event, tenant) {
   }
 }
 
-export default function GatePassCard({ pass, attendee, event, compact = false }) {
+export default function GatePassCard({ pass, attendee, event, compact = false, showActions = true }) {
   const { attendeeId } = useParams()
   const navigate = useNavigate()
   const tenant = useAuthStore((state) => state.tenant)
@@ -235,21 +235,23 @@ export default function GatePassCard({ pass, attendee, event, compact = false })
           </footer>
         </article>
 
-        <div className="print-hidden mt-6 flex flex-wrap justify-center gap-3">
-          <Button icon={<Printer className="h-4 w-4" />} onClick={() => window.print()}>
-            {compact ? 'Print' : 'Print This Pass'}
-          </Button>
-          {isStandalone ? (
-            <>
-              <Button variant="outline" icon={<Download className="h-4 w-4" />} onClick={downloadPdf}>
-                Download PDF
-              </Button>
-              <Button variant="ghost" icon={<ArrowLeft className="h-4 w-4" />} onClick={() => navigate(-1)}>
-                ← Back to Event
-              </Button>
-            </>
-          ) : null}
-        </div>
+        {showActions ? (
+          <div className="print-hidden mt-6 flex flex-wrap justify-center gap-3">
+            <Button icon={<Printer className="h-4 w-4" />} onClick={() => window.print()}>
+              {compact ? 'Print' : 'Print This Pass'}
+            </Button>
+            {isStandalone ? (
+              <>
+                <Button variant="outline" icon={<Download className="h-4 w-4" />} onClick={downloadPdf}>
+                  Download PDF
+                </Button>
+                <Button variant="ghost" icon={<ArrowLeft className="h-4 w-4" />} onClick={() => navigate(-1)}>
+                  ← Back to Event
+                </Button>
+              </>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </main>
   )
