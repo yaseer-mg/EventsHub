@@ -68,13 +68,14 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use('/api/auth', authLimiter, authRoutes);
-app.use('/api/attendees/scan', scanLimiter);
+app.use(['/api/scan', '/api/attendees/scan'], scanLimiter);
 app.use('/api', apiLimiter);
 
 app.use('/api/clients', clientRoutes);
 app.use('/api/halls', hallRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api', attendeeRoutes);
 app.use('/api/attendees', attendeeRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/billing', billingRoutes);

@@ -206,7 +206,10 @@ CREATE TABLE attendees (
   tenant_id     UUID REFERENCES tenants(id) ON DELETE CASCADE,
   event_id      UUID REFERENCES events(id) ON DELETE CASCADE,
   full_name     VARCHAR(255) NOT NULL,
-  seat_number   VARCHAR(50),
+  seat_number   VARCHAR(50) NOT NULL,
+  tag           VARCHAR(100),
+  pass_template VARCHAR(80),
+  pass_details  JSONB DEFAULT '{}'::jsonb,
   qr_token      VARCHAR(255) UNIQUE NOT NULL,
   checked_in    BOOLEAN DEFAULT false,
   checked_in_at TIMESTAMP,
@@ -241,6 +244,7 @@ CREATE INDEX idx_events_tenant_id ON events(tenant_id);
 CREATE INDEX idx_events_tenant_date ON events(tenant_id, event_date);
 CREATE INDEX idx_attendees_event_id ON attendees(event_id);
 CREATE INDEX idx_attendees_qr_token ON attendees(qr_token);
+CREATE UNIQUE INDEX idx_attendees_event_seat ON attendees(event_id, LOWER(seat_number));
 CREATE INDEX idx_clients_tenant_id ON clients(tenant_id);
 CREATE INDEX idx_halls_tenant_id ON halls(tenant_id);
 CREATE INDEX idx_audit_tenant_id ON audit_log(tenant_id);

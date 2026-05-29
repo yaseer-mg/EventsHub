@@ -79,6 +79,7 @@ function ResultCard({ result, onReset }) {
         <>
           <p className="mt-5 text-2xl font-semibold">{result.attendeeName}</p>
           <p className="mt-2 text-lg">Seat: {result.seatNumber}</p>
+          {result.tag ? <p className="mt-2 text-lg">Tag: {result.tag}</p> : null}
           <p className="mt-2 text-sm opacity-80">{result.eventName}</p>
         </>
       ) : null}
@@ -186,6 +187,7 @@ export default function ScanConfirm() {
         type: 'success',
         attendeeName: data.attendee?.full_name ?? data.attendee_name,
         seatNumber: data.attendee?.seat_number ?? data.seat_number,
+        tag: data.attendee?.tag ?? data.tag,
         eventName: data.event?.event_name ?? data.event_name ?? selectedEvent?.event_name,
       })
     },

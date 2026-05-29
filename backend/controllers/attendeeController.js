@@ -9,7 +9,10 @@ const {
 
 const attendeeInputSchema = Joi.object({
   full_name: Joi.string().trim().max(255).required(),
-  seat_number: Joi.string().trim().max(50).optional().allow('', null),
+  seat_number: Joi.string().trim().max(50).required(),
+  tag: Joi.string().trim().max(100).optional().allow('', null),
+  pass_template: Joi.string().trim().max(80).optional().allow('', null),
+  pass_details: Joi.object().unknown(true).optional().allow(null),
 });
 
 const bulkCreateAttendeesSchema = Joi.object({
@@ -51,7 +54,7 @@ function getTodayDateOnly() {
 
 async function getOwnedEvent(eventId, tenantId, db = { query }) {
   const result = await db.query(
-    `SELECT e.*, b.guest_count, b.payment_status
+    `SELECT e.*, b.guest_count, b.payment_status, b.event_name
      FROM events e
      JOIN bookings b ON e.booking_id = b.id
      WHERE e.id = $1 AND e.tenant_id = $2`,
@@ -94,6 +97,14 @@ async function bulkCreateAttendees(req, res, next) {
     }
 
     const count = value.attendees.length;
+    const normalizedSeats = value.attendees.map((attendee) =>
+      attendee.seat_number.trim().toLowerCase()
+    );
+    const uniqueSeats = new Set(normalizedSeats);
+
+    if (uniqueSeats.size !== normalizedSeats.length) {
+      throw new AppError('Each gate pass must have a unique seat number', 400);
+    }
 
     if (
       planLimits.max_attendees_per_event !== -1 &&
@@ -121,18 +132,25 @@ async function bulkCreateAttendees(req, res, next) {
 
     await withTransaction(async (client) => {
       for (const attendee of value.attendees) {
-        const token = generateQRToken();
+        const token = generateQRToken({
+          eventName: event.event_name,
+          tag: attendee.tag,
+        });
 
         await client.query(
           `INSERT INTO attendees (
-             tenant_id, event_id, full_name, seat_number, qr_token
+             tenant_id, event_id, full_name, seat_number, tag,
+             pass_template, pass_details, qr_token
            )
-           VALUES ($1, $2, $3, $4, $5)`,
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
           [
             req.tenantId,
             req.params.id,
             attendee.full_name,
-            attendee.seat_number || null,
+            attendee.seat_number.trim(),
+            attendee.tag || null,
+            attendee.pass_template || null,
+            attendee.pass_details || null,
             token,
           ]
         );
@@ -187,6 +205,7 @@ async function getEventAttendees(req, res, next) {
       conditions.push(`(
         full_name ILIKE $${index}
         OR seat_number ILIKE $${index}
+        OR tag ILIKE $${index}
       )`);
       values.push(`%${search}%`);
     }
@@ -265,6 +284,10 @@ async function getAttendeePass(req, res, next) {
         event_id: attendeeRecord.event_id,
         full_name: attendeeRecord.full_name,
         seat_number: attendeeRecord.seat_number,
+        tag: attendeeRecord.tag,
+        pass_template: attendeeRecord.pass_template,
+        pass_details: attendeeRecord.pass_details,
+        qr_token: attendeeRecord.qr_token,
         checked_in: attendeeRecord.checked_in,
         checked_in_at: attendeeRecord.checked_in_at,
         created_at: attendeeRecord.created_at,
@@ -362,6 +385,7 @@ async function scanQR(req, res, next) {
       attendee: {
         full_name: attendee.full_name,
         seat_number: attendee.seat_number,
+        tag: attendee.tag,
       },
       event: {
         event_name: attendee.event_name,

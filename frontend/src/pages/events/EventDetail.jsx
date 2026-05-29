@@ -80,7 +80,14 @@ export default function EventDetail() {
     return attendees
       .filter((attendee) => {
         const name = attendee.full_name ?? attendee.name ?? ''
-        return name.toLowerCase().includes(search.toLowerCase())
+        const tag = attendee.tag ?? ''
+        const seat = attendee.seat_number ?? attendee.seat ?? ''
+        const searchTerm = search.toLowerCase()
+        return (
+          name.toLowerCase().includes(searchTerm) ||
+          tag.toLowerCase().includes(searchTerm) ||
+          seat.toLowerCase().includes(searchTerm)
+        )
       })
       .filter((attendee) => {
         if (filter === 'checked') return Boolean(attendee.checked_in ?? attendee.checked_in_at)
@@ -124,6 +131,7 @@ export default function EventDetail() {
   const columns = [
     { key: 'seat_number', label: 'Seat#', render: (row) => row.seat_number ?? row.seat ?? '-' },
     { key: 'name', label: 'Name', render: (row) => row.full_name ?? row.name ?? '-' },
+    { key: 'tag', label: 'Tag', render: (row) => row.tag ?? '-' },
     {
       key: 'check_in',
       label: 'Check-in Status',
