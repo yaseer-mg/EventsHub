@@ -107,7 +107,7 @@ function EventCard({ event, onDelete, onStatus, statusLoading }) {
             Start Event
           </Button>
         ) : null}
-        {status === 'upcoming' || status === 'cancelled' ? (
+        {status !== 'ongoing' ? (
           <Button
             variant="danger"
             icon={<Trash2 className="h-4 w-4" />}

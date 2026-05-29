@@ -741,9 +741,9 @@ async function deleteBooking(req, res, next) {
     );
     const event = eventResult.rows[0];
 
-    if (event && ['ongoing', 'completed'].includes(event.status)) {
+    if (event?.status === 'ongoing') {
       throw new AppError(
-        'Only bookings without active or completed events can be deleted',
+        'Bookings with ongoing events cannot be deleted',
         400
       );
     }

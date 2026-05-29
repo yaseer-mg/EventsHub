@@ -387,8 +387,8 @@ async function deleteEvent(req, res, next) {
       throw new AppError('Event not found', 404);
     }
 
-    if (!['upcoming', 'cancelled'].includes(event.status)) {
-      throw new AppError('Only upcoming or cancelled events can be deleted', 400);
+    if (event.status === 'ongoing') {
+      throw new AppError('Ongoing events cannot be deleted', 400);
     }
 
     await withTransaction(async (client) => {

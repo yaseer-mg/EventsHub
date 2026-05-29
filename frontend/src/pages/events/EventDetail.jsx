@@ -182,7 +182,7 @@ export default function EventDetail() {
             >
               {statusAction.label}
             </Button>
-            {event.status === 'upcoming' || event.status === 'cancelled' ? (
+            {event.status !== 'ongoing' ? (
               <Button
                 variant="danger"
                 icon={<Trash2 className="h-4 w-4" />}
@@ -325,7 +325,7 @@ export default function EventDetail() {
               </div>
             ) : null}
 
-            {event.status === 'upcoming' || event.status === 'cancelled' ? (
+            {event.status !== 'ongoing' ? (
               <Button
                 variant="danger"
                 className="w-full"
