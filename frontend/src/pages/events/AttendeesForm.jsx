@@ -110,19 +110,52 @@ function makeDetails(fields) {
   return Object.fromEntries(fields.map(([name]) => [name, '']))
 }
 
+function normalizeSeatNumber(value) {
+  return String(value || '').trim().replace(/\s+/g, ' ').toLowerCase()
+}
+
+function findDuplicateSeats(attendees) {
+  const seen = new Set()
+  const duplicates = new Set()
+
+  attendees.forEach((attendee) => {
+    const seat = normalizeSeatNumber(attendee.seat_number)
+
+    if (!seat) return
+
+    if (seen.has(seat)) {
+      duplicates.add(attendee.seat_number.trim())
+    } else {
+      seen.add(seat)
+    }
+  })
+
+  return [...duplicates]
+}
+
 function makeAttendees(tagGroups, passTemplate, passDetails) {
+  const prefixCounts = new Map()
+
   return tagGroups.flatMap((group, groupIndex) => {
     const copies = Math.max(0, Number(group.copies || 0))
     const tag = group.tag.trim() || `Tag ${groupIndex + 1}`
     const prefix = group.seatPrefix.trim() || initials(tag, groupIndex + 1)
+    const normalizedPrefix = normalizeSeatNumber(prefix)
+    const start = prefixCounts.get(normalizedPrefix) || 0
 
-    return Array.from({ length: copies }, (_, copyIndex) => ({
-      seat_number: `${prefix}-${copyIndex + 1}`,
-      full_name: `${tag} ${copyIndex + 1}`,
-      tag,
-      pass_template: passTemplate,
-      pass_details: passDetails,
-    }))
+    prefixCounts.set(normalizedPrefix, start + copies)
+
+    return Array.from({ length: copies }, (_, copyIndex) => {
+      const sequence = start + copyIndex + 1
+
+      return {
+        seat_number: `${prefix}-${sequence}`,
+        full_name: `${tag} ${sequence}`,
+        tag,
+        pass_template: passTemplate,
+        pass_details: passDetails,
+      }
+    })
   })
 }
 
@@ -214,8 +247,7 @@ export default function AttendeesForm() {
   }
 
   function review() {
-    const seats = attendees.map((attendee) => attendee.seat_number.trim().toLowerCase())
-    const hasDuplicateSeat = new Set(seats).size !== seats.length
+    const duplicateSeats = findDuplicateSeats(attendees)
     const incomplete = attendees.some(
       (attendee) => !attendee.full_name.trim() || !attendee.seat_number.trim() || !attendee.tag.trim(),
     )
@@ -225,8 +257,8 @@ export default function AttendeesForm() {
       return
     }
 
-    if (hasDuplicateSeat) {
-      setWarning('Seat numbers must be unique for this event.')
+    if (duplicateSeats.length) {
+      setWarning(`Seat numbers must be unique. Duplicate: ${duplicateSeats.join(', ')}.`)
       return
     }
 
